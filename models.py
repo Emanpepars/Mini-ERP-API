@@ -1,5 +1,5 @@
 from extensions import db
-
+from datetime import datetime
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -20,6 +20,8 @@ class Order(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="draft")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User")
     product = db.relationship("Product")

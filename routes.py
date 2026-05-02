@@ -118,11 +118,13 @@ def create_order():
     db.session.commit()
 
     return jsonify({
-        "id": new_order.id,
-        "user": user.name,
-        "product": product.name,
-        "quantity": new_order.quantity,
-        "total_price": new_order.total_price
+    "id": new_order.id,
+    "user": user.name,
+    "product": product.name,
+    "quantity": new_order.quantity,
+    "total_price": new_order.total_price,
+    "status": new_order.status,
+    "created_at": new_order.created_at.isoformat()
     }), 201
 
 
@@ -136,11 +138,12 @@ def get_orders():
             "user": order.user.name,
             "product": order.product.name,
             "quantity": order.quantity,
-            "total_price": order.total_price
+            "total_price": order.total_price,
+            "status": order.status,
+            "created_at": order.created_at.isoformat()
         }
         for order in orders
     ])
-
 
 @api.route("/orders/<int:order_id>", methods=["GET"])
 def get_order(order_id):
@@ -154,7 +157,9 @@ def get_order(order_id):
         "user": order.user.name,
         "product": order.product.name,
         "quantity": order.quantity,
-        "total_price": order.total_price
+        "total_price": order.total_price,
+        "status": order.status,
+        "created_at": order.created_at.isoformat() 
     })
 
 
