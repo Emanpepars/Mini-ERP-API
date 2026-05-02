@@ -91,7 +91,34 @@ mini-erp-api/
 
 ---
 
-## Setup
+## Quick Start
+
+Three terminals, two minutes:
+
+```bash
+# 1. Backend (terminal 1)
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python3 app.py                     # → http://127.0.0.1:5000
+
+# 2. Demo data (terminal 2 — optional but recommended)
+python3 seed.py                    # populates products + orders
+
+# 3. Frontend (terminal 3)
+cd frontend && python3 -m http.server 5500
+#                                  → open http://127.0.0.1:5500
+```
+
+Sign in on the login screen with one of the seeded test accounts:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@example.com` | `admin123` |
+| Customer | `customer@example.com` | `customer123` |
+
+---
+
+## Setup (details)
 
 ```bash
 python3 -m venv venv
@@ -332,6 +359,62 @@ Authorization: Bearer <admin_token>
 ```json
 { "error": "Admin privileges required." }
 ```
+
+---
+
+## Running the Frontend
+
+A small vanilla HTML/CSS/JS client lives in [`frontend/`](frontend/). It logs in against the API, stores the JWT in `localStorage`, and renders different views depending on your role.
+
+> ⚠️ **Do not open `frontend/index.html` as a `file://` URL.** Browsers block `fetch()` from a `file://` origin (CORS), which produced the `"Missing or invalid Authorization header"` errors in the previous version. Always serve it over HTTP.
+
+### Run it (one command)
+
+In a **new terminal** (leave the backend running on port 5000):
+
+```bash
+cd frontend
+python3 -m http.server 5500
+```
+
+Then open [http://127.0.0.1:5500](http://127.0.0.1:5500) in your browser.
+
+### What you'll see
+
+1. A clean **login screen** with two convenience buttons that pre-fill the seeded admin / customer accounts.
+2. After a successful login the JWT is stored in `localStorage` and every API call automatically sends `Authorization: Bearer <token>`.
+3. **Auto-resume**: if a saved session is found when the page loads, the login screen is skipped and you go straight to home.
+4. **Multi-page layout** with a left sidebar and a hash-based router — each section is its own page, not a long scroll:
+
+   | Route | Title | Who can see it |
+   |-------|-------|----------------|
+   | `#/dashboard` | Dashboard | Admin |
+   | `#/products` | Products | Everyone |
+   | `#/orders` | Orders / My Orders | Everyone (customers see only their own) |
+   | `#/users` | Users | Admin |
+   | `#/reports` | Sales Reports | Admin |
+
+   - Browser **back / forward** works — the URL hash is the source of truth.
+   - **Admin home** = `#/dashboard`. **Customer home** = `#/products`.
+   - A customer who manually navigates to an admin URL (e.g. `#/dashboard`) lands on a friendly *Access denied* page instead of the API erroring out.
+5. **Logout** clears `localStorage` and returns to the login screen.
+
+### Architecture (frontend)
+
+- `index.html` — defines two top-level shells (`#loginScreen` and `#appShell`) plus one `<section class="view">` per route.
+- `script.js` — owns:
+  - `apiRequest(path, options)` — single fetch helper that injects the Bearer token, parses JSON errors, and auto-logs out on `401`.
+  - `ROUTES` table mapping each path to `{title, render(), adminOnly}`.
+  - A tiny **hash router** that listens to `hashchange`, hides every `.view`, shows the active one, and calls its loader.
+  - Session helpers (`saveSession`, `loadSession`, `clearSession`) that read/write `miniErp.token` and `miniErp.user` in `localStorage`.
+- `style.css` — sidebar shell (`.app-shell`, `.sidebar`, `.nav-link.active`), top bar, view container, plus a global `[hidden] { display: none !important; }` so attribute hiding always wins over `display: grid|flex`.
+
+### Common error: "Missing or invalid Authorization header"
+
+This happens when:
+- The frontend was opened directly as a `file://` URL → **fix:** serve it via `python3 -m http.server 5500`.
+- The token was never sent (older script) → **fix:** the new `apiRequest()` helper in `script.js` always adds `Authorization: Bearer <token>` when a session exists.
+- The token expired → **fix:** the helper detects 401 responses, clears the session and bounces you back to the login screen.
 
 ---
 

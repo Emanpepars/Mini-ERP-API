@@ -14,160 +14,272 @@
   </head>
 
   <body>
-    <header class="app-header">
-      <div class="header-inner">
-        <div class="brand">
+    <!-- ========================================================
+         LOGIN SCREEN  (shown only when no session)
+    ========================================================= -->
+    <section id="loginScreen" class="login-screen" hidden>
+      <div class="login-card">
+        <div class="login-brand">
+          <div class="brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/>
+            </svg>
+          </div>
+          <h1>Mini ERP</h1>
+          <p class="login-sub">Sign in to your account</p>
+        </div>
+
+        <form id="loginForm" class="form" onsubmit="event.preventDefault(); doLogin();">
+          <div class="field">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="username" />
+          </div>
+          <div class="field">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+
+          <div id="loginError" class="login-error" hidden></div>
+
+          <button type="submit" class="primary-btn" id="loginBtn">
+            <span class="btn-label">Sign in</span>
+          </button>
+        </form>
+
+        <div class="login-hints">
+          <div class="hint-title">Test accounts</div>
+          <div class="hint-row">
+            <span class="role-pill admin">Admin</span>
+            <code>admin@example.com</code> / <code>admin123</code>
+            <button type="button" class="link-btn" onclick="prefillLogin('admin')">Use</button>
+          </div>
+          <div class="hint-row">
+            <span class="role-pill customer">Customer</span>
+            <code>customer@example.com</code> / <code>customer123</code>
+            <button type="button" class="link-btn" onclick="prefillLogin('customer')">Use</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         APP SHELL  (shown when logged in)
+         Sidebar + top bar + a single <main> view container.
+    ========================================================= -->
+    <div id="appShell" class="app-shell" hidden>
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-brand">
           <div class="brand-logo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/>
             </svg>
           </div>
           <div>
-            <h1>Mini ERP</h1>
-            <p class="brand-sub">Users · Products · Orders · Invoices</p>
+            <div class="sidebar-title">Mini ERP</div>
+            <div class="sidebar-sub">Dashboard</div>
           </div>
         </div>
 
-        <div class="header-actions">
-          <div class="status-dot">
-            <span class="dot" id="apiStatusDot"></span>
-            <span id="apiStatusText">Connecting…</span>
+        <nav class="sidebar-nav" id="sidebarNav">
+          <!-- Nav links rendered by the router based on role -->
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="user-block">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+              <div class="user-name" id="currentUserName">—</div>
+              <span class="role-pill" id="currentUserRole">—</span>
+            </div>
           </div>
-          <button class="ghost-btn" onclick="refreshAll()">
+          <button class="ghost-btn full" onclick="doLogout()">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>
             </svg>
-            Refresh
+            Logout
           </button>
         </div>
-      </div>
-    </header>
+      </aside>
 
-    <div class="stats-bar">
-      <div class="stat-card">
-        <div class="stat-label">Users</div>
-        <div class="stat-value" id="statUsers">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Products</div>
-        <div class="stat-value" id="statProducts">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Orders</div>
-        <div class="stat-value" id="statOrders">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Confirmed</div>
-        <div class="stat-value" id="statConfirmed">—</div>
+      <!-- Main content -->
+      <div class="main-area">
+        <header class="top-bar">
+          <div class="top-bar-title">
+            <h2 id="viewTitle">Home</h2>
+            <p id="viewSubtitle" class="top-bar-sub">Welcome</p>
+          </div>
+          <div class="top-bar-actions">
+            <div class="status-dot">
+              <span class="dot" id="apiStatusDot"></span>
+              <span id="apiStatusText">Connecting…</span>
+            </div>
+            <button class="ghost-btn" onclick="reloadCurrentView()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </header>
+
+        <main class="view-container">
+          <!-- ===== DASHBOARD VIEW (admin) ===== -->
+          <section class="view" id="view-dashboard" hidden>
+            <div class="stats-bar">
+              <div class="stat-card">
+                <div class="stat-label">Users</div>
+                <div class="stat-value" id="statUsers">—</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Products</div>
+                <div class="stat-value" id="statProducts">—</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Orders</div>
+                <div class="stat-value" id="statOrders">—</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Revenue</div>
+                <div class="stat-value" id="statRevenue">—</div>
+              </div>
+            </div>
+            <section class="card">
+              <div class="card-head">
+                <h2>Activity</h2>
+              </div>
+              <div id="dashboardContent" class="list"></div>
+            </section>
+          </section>
+
+          <!-- ===== PRODUCTS VIEW (everyone) ===== -->
+          <section class="view" id="view-products" hidden>
+            <section class="card">
+              <div class="card-head">
+                <h2>Products</h2>
+                <span class="badge" id="productsCount">0</span>
+              </div>
+
+              <form class="form admin-only" onsubmit="event.preventDefault(); createProduct();" hidden>
+                <div class="field">
+                  <label for="productName">Product name</label>
+                  <input type="text" id="productName" placeholder="e.g. Wireless Mouse" autocomplete="off" />
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="productPrice">Price</label>
+                    <input type="number" id="productPrice" placeholder="0.00" min="0" step="0.01" />
+                  </div>
+                  <div class="field">
+                    <label for="productStock">Stock</label>
+                    <input type="number" id="productStock" placeholder="0" min="0" />
+                  </div>
+                </div>
+                <button type="submit" class="primary-btn" id="createProductBtn">
+                  <span class="btn-label">Add Product</span>
+                </button>
+              </form>
+
+              <div id="productsList" class="list"></div>
+            </section>
+          </section>
+
+          <!-- ===== ORDERS VIEW (everyone) ===== -->
+          <section class="view" id="view-orders" hidden>
+            <section class="card">
+              <div class="card-head">
+                <h2 id="ordersHeading">Orders</h2>
+                <span class="badge" id="ordersCount">0</span>
+              </div>
+
+              <form class="form" onsubmit="event.preventDefault(); createOrder();">
+                <div class="field admin-only" hidden>
+                  <label for="orderUserId">User ID (optional, admin only)</label>
+                  <input type="number" id="orderUserId" placeholder="leave blank to use yourself" min="1" />
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="orderProductId">Product ID</label>
+                    <input type="number" id="orderProductId" placeholder="1" min="1" />
+                  </div>
+                  <div class="field">
+                    <label for="orderQuantity">Quantity</label>
+                    <input type="number" id="orderQuantity" placeholder="1" min="1" />
+                  </div>
+                </div>
+                <button type="submit" class="primary-btn" id="createOrderBtn">
+                  <span class="btn-label">Create Order</span>
+                </button>
+              </form>
+
+              <div id="ordersList" class="list"></div>
+            </section>
+          </section>
+
+          <!-- ===== USERS VIEW (admin) ===== -->
+          <section class="view" id="view-users" hidden>
+            <section class="card">
+              <div class="card-head">
+                <h2>Users</h2>
+                <span class="badge" id="usersCount">0</span>
+              </div>
+
+              <form class="form" onsubmit="event.preventDefault(); createUser();">
+                <div class="field">
+                  <label for="userName">Name</label>
+                  <input type="text" id="userName" placeholder="e.g. Jane Doe" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label for="userEmail">Email</label>
+                  <input type="email" id="userEmail" placeholder="jane@example.com" autocomplete="off" />
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="userPassword">Password</label>
+                    <input type="password" id="userPassword" placeholder="min 6 chars" />
+                  </div>
+                  <div class="field">
+                    <label for="userRole">Role</label>
+                    <select id="userRole">
+                      <option value="customer">customer</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" class="primary-btn" id="createUserBtn">
+                  <span class="btn-label">Add User</span>
+                </button>
+              </form>
+
+              <div id="usersList" class="list"></div>
+            </section>
+          </section>
+
+          <!-- ===== REPORTS VIEW (admin) ===== -->
+          <section class="view" id="view-reports" hidden>
+            <section class="card">
+              <div class="card-head">
+                <h2>Sales Reports</h2>
+              </div>
+              <div id="reportsContent" class="list"></div>
+            </section>
+          </section>
+
+          <!-- ===== FORBIDDEN VIEW ===== -->
+          <section class="view" id="view-forbidden" hidden>
+            <section class="card">
+              <div class="card-head">
+                <h2>Access denied</h2>
+              </div>
+              <div class="empty">
+                <strong>Admins only</strong>
+                This section is only available to admin accounts. Use the sidebar to navigate.
+              </div>
+            </section>
+          </section>
+        </main>
       </div>
     </div>
-
-    <main>
-      <section class="card" data-card="users">
-        <div class="card-head">
-          <h2>Users</h2>
-          <button class="icon-btn" onclick="getUsers()" title="Reload users" aria-label="Reload users">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>
-            </svg>
-          </button>
-        </div>
-
-        <form class="form" onsubmit="event.preventDefault(); createUser();">
-          <div class="field">
-            <label for="userName">Name</label>
-            <input type="text" id="userName" placeholder="e.g. Jane Doe" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="userEmail">Email</label>
-            <input type="email" id="userEmail" placeholder="jane@example.com" autocomplete="off" />
-          </div>
-          <button type="submit" class="primary-btn" id="createUserBtn">
-            <span class="btn-label">Add User</span>
-          </button>
-        </form>
-
-        <div class="list-head">
-          <span class="list-title">All users</span>
-          <span class="badge" id="usersCount">0</span>
-        </div>
-        <div id="usersList" class="list"></div>
-      </section>
-
-      <section class="card" data-card="products">
-        <div class="card-head">
-          <h2>Products</h2>
-          <button class="icon-btn" onclick="getProducts()" title="Reload products" aria-label="Reload products">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>
-            </svg>
-          </button>
-        </div>
-
-        <form class="form" onsubmit="event.preventDefault(); createProduct();">
-          <div class="field">
-            <label for="productName">Product name</label>
-            <input type="text" id="productName" placeholder="e.g. Wireless Mouse" autocomplete="off" />
-          </div>
-          <div class="row">
-            <div class="field">
-              <label for="productPrice">Price</label>
-              <input type="number" id="productPrice" placeholder="0.00" min="0" step="0.01" />
-            </div>
-            <div class="field">
-              <label for="productStock">Stock</label>
-              <input type="number" id="productStock" placeholder="0" min="0" />
-            </div>
-          </div>
-          <button type="submit" class="primary-btn" id="createProductBtn">
-            <span class="btn-label">Add Product</span>
-          </button>
-        </form>
-
-        <div class="list-head">
-          <span class="list-title">Inventory</span>
-          <span class="badge" id="productsCount">0</span>
-        </div>
-        <div id="productsList" class="list"></div>
-      </section>
-
-      <section class="card" data-card="orders">
-        <div class="card-head">
-          <h2>Orders</h2>
-          <button class="icon-btn" onclick="getOrders()" title="Reload orders" aria-label="Reload orders">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>
-            </svg>
-          </button>
-        </div>
-
-        <form class="form" onsubmit="event.preventDefault(); createOrder();">
-          <div class="row">
-            <div class="field">
-              <label for="orderUserId">User ID</label>
-              <input type="number" id="orderUserId" placeholder="1" min="1" />
-            </div>
-            <div class="field">
-              <label for="orderProductId">Product ID</label>
-              <input type="number" id="orderProductId" placeholder="1" min="1" />
-            </div>
-          </div>
-          <div class="field">
-            <label for="orderQuantity">Quantity</label>
-            <input type="number" id="orderQuantity" placeholder="1" min="1" />
-          </div>
-          <button type="submit" class="primary-btn" id="createOrderBtn">
-            <span class="btn-label">Create Order</span>
-          </button>
-        </form>
-
-        <div class="list-head">
-          <span class="list-title">All orders</span>
-          <span class="badge" id="ordersCount">0</span>
-        </div>
-        <div id="ordersList" class="list"></div>
-      </section>
-    </main>
 
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
