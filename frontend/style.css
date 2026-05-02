@@ -1139,6 +1139,25 @@ select:focus {
   gap: 10px;
 }
 
+/* Status pill + ghost button were designed for the dark header.
+   Re-skin them for the light top bar so text is readable. */
+.top-bar .status-dot {
+  background: var(--surface-soft);
+  border-color: var(--border);
+  color: var(--text-soft);
+}
+.top-bar .ghost-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+.top-bar .ghost-btn:hover {
+  background: var(--surface-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 .view-container {
   padding: 28px 32px 40px;
   display: block; /* override the previous main grid */
