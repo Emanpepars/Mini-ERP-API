@@ -182,3 +182,26 @@ def delete_order(order_id):
         "product": product.name,
         "current_stock": product.stock
     })
+
+
+@api.route("/orders/<int:order_id>/confirm", methods=["PUT"])
+def confirm_order(order_id):
+    order = Order.query.get(order_id)
+
+    if order is None:
+        return jsonify({"message": "Order not found"}), 404
+
+    if order.status == "confirmed":
+        return jsonify({"message": "Order is already confirmed"}), 400
+
+    if order.status == "cancelled":
+        return jsonify({"message": "Cancelled order cannot be confirmed"}), 400
+
+    order.status = "confirmed"
+    db.session.commit()
+
+    return jsonify({
+        "message": "Order confirmed successfully",
+        "order_id": order.id,
+        "status": order.status
+    })
