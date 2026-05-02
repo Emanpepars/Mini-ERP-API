@@ -205,3 +205,58 @@ def confirm_order(order_id):
         "order_id": order.id,
         "status": order.status
     })
+
+@api.route("/orders/<int:order_id>/cancel", methods=["PUT"])
+def cancel_order(order_id):
+    order = Order.query.get(order_id)
+
+    if order is None:
+        return jsonify({"message": "Order not found"}), 404
+
+    if order.status == "cancelled":
+        return jsonify({"message": "Order is already cancelled"}), 400
+
+    # رجّعي stock
+    product = order.product
+    product.stock = product.stock + order.quantity
+
+    order.status = "cancelled"
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Order cancelled successfully",
+        "order_id": order.id,
+        "status": order.status,
+        "returned_stock": order.quantity,
+        "current_stock": product.stock
+    })
+
+@api.route("/orders/<int:order_id>/invoice", methods=["GET"])
+def get_invoice(order_id):
+    order = Order.query.get(order_id)
+
+    if order is None:
+        return jsonify({"message": "Order not found"}), 404
+
+    if order.status == "cancelled":
+        return jsonify({"message": "Cancelled orders cannot have invoices"}), 400
+
+    return jsonify({
+        "invoice_number": f"INV-{order.id}",
+        "order_id": order.id,
+        "customer": {
+            "id": order.user.id,
+            "name": order.user.name,
+            "email": order.user.email
+        },
+        "product": {
+            "id": order.product.id,
+            "name": order.product.name,
+            "unit_price": order.product.price
+        },
+        "quantity": order.quantity,
+        "total_price": order.total_price,
+        "order_status": order.status,
+        "created_at": order.created_at.isoformat()
+    })
